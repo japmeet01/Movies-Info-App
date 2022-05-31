@@ -1,15 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import { Api_get } from '../misc/config';
+import { api_get } from '../misc/config';
 
 const Show = () => {
   const { id } = useParams();
   const [show, setShow] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errors, setErrors] = useState(null);
   useEffect(() => {
-    Api_get(`/shows/?${id}embed[]=seasons&embed[]=cast`).then(result => {
-      setShow(result);
-    });
+    let isMounted = true;
+    api_get(`/shows/${id}?embed[]=seasons&embed[]=cast`)
+      .then(result => {
+        if (isMounted) {
+          setShow(result);
+          setIsLoading(false);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          setErrors(err.message);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
+
+  console.log(show);
+
+  if (isLoading) {
+    return <div>Data is being Loaded. Please Wait....</div>;
+  }
+  if (errors) {
+    return <div>Error Occured:{errors}</div>;
+  }
 
   return <div>Show Page</div>;
 };
